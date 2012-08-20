@@ -1,0 +1,78 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    activemodel (3.2.8)
+      activesupport (= 3.2.8)
+      builder (~> 3.0.0)
+    activesupport (3.2.8)
+      i18n (~> 0.6)
+      multi_json (~> 1.0)
+    braintree (2.16.0)
+      builder (>= 2.0.0)
+    bson (1.6.4)
+    bson_ext (1.6.4)
+      bson (~> 1.6.4)
+    builder (3.0.0)
+    coderay (1.0.7)
+    coffee-script (2.2.0)
+      coffee-script-source
+      execjs
+    coffee-script-source (1.3.3)
+    daemons (1.1.9)
+    eventmachine (0.12.10)
+    execjs (1.4.0)
+      multi_json (~> 1.0)
+    geocoder (1.1.2)
+    haml (3.1.7)
+    i18n (0.6.0)
+    method_source (0.8)
+    mongoid (3.0.4)
+      activemodel (~> 3.1)
+      moped (~> 1.1)
+      origin (~> 1.0)
+      tzinfo (~> 0.3.22)
+    moped (1.2.0)
+    multi_json (1.3.6)
+    origin (1.0.6)
+    pry (0.9.10)
+      coderay (~> 1.0.5)
+      method_source (~> 0.8)
+      slop (~> 3.3.1)
+    pry-doc (0.4.4)
+      pry (>= 0.9.9.6)
+      yard (~> 0.8.1)
+    rack (1.4.1)
+    rack-protection (1.2.0)
+      rack
+    redcarpet (2.1.1)
+    sass (3.2.1)
+    sinatra (1.3.2)
+      rack (~> 1.3, >= 1.3.6)
+      rack-protection (~> 1.2)
+      tilt (~> 1.3, >= 1.3.3)
+    slop (3.3.2)
+    thin (1.4.1)
+      daemons (>= 1.0.9)
+      eventmachine (>= 0.12.6)
+      rack (>= 1.0.0)
+    tilt (1.3.3)
+    tzinfo (0.3.33)
+    yard (0.8.2.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  braintree
+  bson_ext (~> 1.3)
+  coffee-script
+  geocoder
+  haml
+  mongoid (~> 3.0.0.rc)
+  pry
+  pry-doc
+  rack
+  redcarpet
+  sass
+  sinatra
+  thin
