@@ -1,19 +1,32 @@
 # Requirements
-[ "sinatra", "haml", "sass", "redcarpet", "pry", "mongoid", "coffee-script", "geocoder", "braintree" ].each { |gem| require gem}
+require "sinatra"
+require "haml"
+require "sass"
+require "redcarpet"
+require "pry"
+require "mongoid"
+require "coffee-script"
+require "geocoder"
+require "braintree"
+
 enable :inline_templates
 set :public_folder, 'public'
 Mongoid.load! "config/mongoid.yml"
 enable :sessions
 
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
-# MODEL #
+# MODELS #
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
-
 class User
   include Mongoid::Document
   field :email, type: String
   field :salt, type: String
   field :hashed_password, type: String
+  field :coordinates, type: Array
+  field :address
+  include Geocoder::Model::Mongoid
+  reverse_geocoded_by :coordinates
+  after_validation :reverse_geocode
   
   def password=(pass)
     @password = pass
@@ -39,48 +52,142 @@ class User
     return str
   end  
   
-  field :coordinates, type: Array, default: []
-  field :address 
- 
+  
+  field :spirit, type: Integer, default: 8
+  field :avatar, type: Moped::BSON::ObjectId
+
+  has_many :characters
+  has_many :locations
 end
-
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
-
-class Character
+class Npc
   include Mongoid::Document
   field :name, type: String 
-  field :content, type: String 
-  field :updated, type: DateTime, default: nil
-  field :created, type: DateTime, default: Time.now
+  field :xp, type: Integer
+  
+  field :strength, type: Integer, default: 8
+  field :constitution, type: Integer, default: 8
+  field :dexterity, type: Integer, default: 8
+  field :extroversion, type: Integer, default: 8
+  field :introvert, type: Integer, default: 8
+  field :intellegence, type: Integer, default: 8
+  field :resolve, type: Integer, default: 8
+  field :intuition, type: Integer, default: 8
+  
+  field :status, type: Array, default: [:disoriented]
+  
+  field :health, type: Array, default: [8, 5, 3] # scratch / wound / fatal
+  field :healthmax, type: Array, default: [8, 5, 3]
+  
+  field :mana, type: Integer, default: 1
+  field :manamax, type: Integer, default: 1
+  
+  field :energy, type: Array, default: [0,0,0]
+  
+  field :ability, type: Hash, default: {}
+
+  field :action, type: Integer, default: 1
+  field :move, type: Integer, default: 1
+  field :interrupt, type: Integer, default: 1
+
+  field :story, type: Hash, default: {}  
+
+  has_many :items
+  belongs_to :location
 end
-
-#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
-
-class Location
+class Character < Npc
   include Mongoid::Document
-  
-  field :coordinates, type: Array, default: []
-  field :address
-  
-  field :terrain, type: Symbol
-
-#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
-
+  belongs_to :user
+  has_many :journeys
 end
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
+class Journey
+  include Mongoid::Document
+  field :destiny, type: Symbol
+  embeds_many :stories
+end 
+class Story
+  include Mongoid::Document
+  field :step, type: Array
+  field :theme, type: Array
+  field :antagonist, type: Array
+  field :nemesis, type: Moped::BSON::ObjectId
+end
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
+class Item
+  include Mongoid::Document
+  belongs_to :user
+  field :name, type: Symbol
+  field :material, type: Symbol 
+  field :size, type: Integer
+  field :quality, type: Integer
+  
+  field :improvement, type: Hash
+  
+  field :equiped, type: Boolean
+  field :equipedlocation, type: Symbol
+  
+  field :charge, type: Integer
+  field :durability, type: Integer
+  
+  def self.chargemax
+    l = self.durability
+    if self.material == :wood || :leather
+      l *= 2
+    else
+      l *= 0.7
+    end
+    if self.equipedlocation == :finger || :neck || :head
+      l *= 1.5
+    else
+      l *= 0.7
+    end
+    l.round
+  end
+  
+  def self.durabilitymax
+    l = self.size * 3.14 + quality / 1.618 - improvements * 0.7
+    if self.material == :iron
+      l *= 2
+    elsif self.material == :steel
+      l *= 3.14
+    else
+      durablitylimit *= 0.7
+    end
+    if self.equipedlocation == :lefthand || :righthand || :leftrighthand
+      l *= 1.618
+    else
+      l *= 0.7
+    end
+    l.round
+  end
+end
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
+class Location
+  include Mongoid::Document  
+  field :coordinates, type: Array, default: []
+  field :terrain, type: Symbol
+  field :structures, type: Hash
+
+  has_many :npcs
+end
+#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 
 helpers do
-  # SESSIONS #  
   def admin? ; request.cookies[settings.username] == settings.token ; end
   def protected! ; halt [ 401, 'Not Found' ] unless admin? ; end
   def search(pattern="")
     stringarray = pattern.strip.gsub(/(\^\s\*|\d)/, "").downcase.gsub(/\s+/, " ").split(", ")
     stringarray.map!{|s| Regexp.new(s, true)}
-    Character.or({:content.in => stringarray}, {:field.in => stringarray})
+    Npc.or({:content.in => stringarray}, {:field.in => stringarray})
+  end
+  def random(min = 0, max = 0)
+    min + (rand max-min)
   end
 end
 
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
-# ROUTE #
+# ROUTES #
 #~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#
 # SESSIONS #
 get '/login' do
@@ -103,79 +210,163 @@ put '/user/:id' do
 end
 
 # REST #
-get '/character/' do
+get '/location/' do
   # list all
-  character = Character.all
+  @location = Location.near(params[:coordinates])
+  redirect '/' unless request.xhr?
 end
 
-get '/character/:id' do
-  character = Character.find_by(url: params[:id])
-  if character nil? then
+get '/location/:id' do
+  location = Location.find_by(url: params[:coordinates])
+  if location nil? then
     raise Sinatra::NotFound
   else
     status 200
-    body(character.to_json)
+    body(location.to_json)
   end
 end
 
-put '/character/' do
-  #bulk update
-end
-
-put '/character/:id' do
+put '/location/' do
   data = JSON.parse(request.body.string)
   if data.nil? or !data.has_key? 'content' then
     status 404
   else
-    character = Character.new( #~#~#~ add stuff here! remember the comma
-      content: data[:content],
-      created: data[:created],
-      updated: data[:updated]
-    ) 
-    character.save
+    data.each do |d|
+      location = Location.new( # mongofield: object[:key] remember the comma but not for the last field
+        content: d[:terrain],
+        created: d[:npc],
+        updated: d[:structures]
+        ) 
+      location.save
+    end
     status 200
   end
 end
 
-post '/character/:id' do
+put '/location/:id' do
+  data = JSON.parse(request.body.string)
+  if data.nil? or !data.has_key? 'content' then
+    status 404
+  else
+    location = Location.new( #~#~#~ add stuff here! remember the comma
+      content: data[:terrain],
+      created: data[:npc],
+      updated: data[:structures]
+    ) 
+    location.save
+    status 200
+  end
+end
+
+post '/location/:id' do
   data = JSON.parse(request.body.string)
   if data.nil? then
     status 404
   else
-    character = Character.get(params[:id])
-    if character.nil? then
+    location = Location.get(params[:id])
+    if location.nil? then
       status 404
     else
       updated = false
       %w().each do |k| #~#~#~ You need to put what fields to update
         if data.has_key? k
-          character[k] = data[k]
+          location[k] = data[k]
           updated = true
         end
       end
       if updated then
-        character[:modified] = Time.now
-        !character.save ? (status 500) : (status 200)
+        location[:modified] = Time.now
+        !location.save ? (status 500) : (status 200)
       end
     end
   end
 end
 
-delete '/character/' do
+delete '/location/' do
   #delete all
   status 200 unless admin?
 end
 
-delete '/character/:id' do
-  character = Character.get(params[:id])
-  if character nil? then
+delete '/location/:id' do
+  location = Location.get(params[:id])
+  if location nil? then
     status 404
   else
-    character.destroy ? (status 200) : (status 500)
+    location.destroy ? (status 200) : (status 500)
   end
 end
 
+get '/npc/' do
+  # list all
+  npc = Npc.all
+end
 
+get '/npc/:id' do
+  npc = Npc.find_by(url: params[:id])
+  if npc nil? then
+    raise Sinatra::NotFound
+  else
+    status 200
+    body(npc.to_json)
+  end
+end
+
+put '/npc/' do
+  #bulk update
+end
+
+put '/npc/:id' do
+  data = JSON.parse(request.body.string)
+  if data.nil? or !data.has_key? 'content' then
+    status 404
+  else
+    npc = Npc.new( #~#~#~ add stuff here! remember the comma
+      content: data[:content],
+      created: data[:created],
+      updated: data[:updated]
+    ) 
+    npc.save
+    status 200
+  end
+end
+
+post '/npc/:id' do
+  data = JSON.parse(request.body.string)
+  if data.nil? then
+    status 404
+  else
+    npc = Npc.get(params[:id])
+    if npc.nil? then
+      status 404
+    else
+      updated = false
+      %w().each do |k| #~#~#~ You need to put what fields to update
+        if data.has_key? k
+          npc[k] = data[k]
+          updated = true
+        end
+      end
+      if updated then
+        npc[:modified] = Time.now
+        !npc.save ? (status 500) : (status 200)
+      end
+    end
+  end
+end
+
+delete '/npc/' do
+  #delete all
+  status 200 unless admin?
+end
+
+delete '/npc/:id' do
+  npc = Npc.get(params[:id])
+  if npc nil? then
+    status 404
+  else
+    npc.destroy ? (status 200) : (status 500)
+  end
+end
 
 get "/style.css" do
   content_type 'text/css', :charset => 'utf-8'
