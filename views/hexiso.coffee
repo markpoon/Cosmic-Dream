@@ -72,6 +72,9 @@ Crafty.extend hexIso:
   
   see Crafty.hexIso.size
   ###
+  hack: ->
+    console.log "custom command"
+  
   place: (i, j, z, obj) ->
     pos = @pos2px(i, j)
     layer = 1  unless layer
