@@ -1,4 +1,5 @@
 source :rubygems
+ruby "1.9.3"
 
 gem 'sinatra'
 gem 'thin'
@@ -13,10 +14,6 @@ gem 'coffee-script'
 gem 'haml'
 gem 'sass'
 gem 'redcarpet'
-
-gem 'geocoder', :git => 'git://github.com/alexreisner/geocoder.git'
-gem 'braintree'
-
 
 gem 'pry'
 gem 'pry-doc'

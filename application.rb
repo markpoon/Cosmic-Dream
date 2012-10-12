@@ -8,8 +8,6 @@ require "json"
 require "active_support/core_ext/hash/conversions"
 require "mongoid"
 require "coffee-script"
-require "geocoder"
-require "braintree"
 
 require "net/http"
 require "uri"

@@ -1,9 +1,3 @@
-GIT
-  remote: git://github.com/alexreisner/geocoder.git
-  revision: f5caf77c23c9ae40d6a45fcb54291b88c4ef6fef
-  specs:
-    geocoder (1.1.3)
-
 GEM
   remote: http://rubygems.org/
   specs:
@@ -13,33 +7,31 @@ GEM
     activesupport (3.2.8)
       i18n (~> 0.6)
       multi_json (~> 1.0)
-    braintree (2.16.0)
-      builder (>= 2.0.0)
     bson (1.7.0)
     bson_ext (1.7.0)
       bson (~> 1.7.0)
-    builder (3.0.2)
-    coderay (1.0.7)
+    builder (3.0.3)
+    coderay (1.0.8)
     coffee-script (2.2.0)
       coffee-script-source
       execjs
     coffee-script-source (1.3.3)
     daemons (1.1.9)
-    eventmachine (0.12.10)
+    eventmachine (1.0.0)
     execjs (1.4.0)
       multi_json (~> 1.0)
     haml (3.1.7)
     i18n (0.6.1)
     json (1.7.5)
     method_source (0.8)
-    mongoid (3.0.5)
+    mongoid (3.0.9)
       activemodel (~> 3.1)
       moped (~> 1.1)
       origin (~> 1.0)
       tzinfo (~> 0.3.22)
-    moped (1.2.1)
+    moped (1.2.7)
     multi_json (1.3.6)
-    origin (1.0.8)
+    origin (1.0.9)
     pry (0.9.10)
       coderay (~> 1.0.5)
       method_source (~> 0.8)
@@ -50,14 +42,14 @@ GEM
     rack (1.4.1)
     rack-protection (1.2.0)
       rack
-    redcarpet (2.1.1)
+    redcarpet (2.2.0)
     sass (3.2.1)
     sinatra (1.3.3)
       rack (~> 1.3, >= 1.3.6)
       rack-protection (~> 1.2)
       tilt (~> 1.3, >= 1.3.3)
     slop (3.3.3)
-    thin (1.4.1)
+    thin (1.5.0)
       daemons (>= 1.0.9)
       eventmachine (>= 0.12.6)
       rack (>= 1.0.0)
@@ -70,10 +62,8 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
-  braintree
   bson_ext (~> 1.3)
   coffee-script
-  geocoder!
   haml
   json
   mongoid (~> 3.0.0.rc)
