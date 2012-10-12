@@ -1001,7 +1001,6 @@ get "/js/components.js" do
 end
 
 get "/?" do
-  binding.pry
   haml :index
 end
 
