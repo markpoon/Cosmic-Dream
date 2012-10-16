@@ -32,7 +32,12 @@ onGeolocationError = (error) ->
   alert "Geolocation error - code: " + error.code + " message : " + error.message
   
 Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1.0.3", "glyph-icons-1.0.2", "killie-1.0.0"], ($, fx, ui, ajax, dnd) ->
+  hover = document.createElement("div")
+  hover.className = "pixel"
+  hover.id = "tail"
+  $(hover).insertTo("body", "top")
   "#tail".hide()
+  "#menu".hide()
   generateTiles = (tiles) ->
     console.log "Generating #{tiles.length} terrain tiles."
     for tile in tiles
@@ -113,7 +118,9 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
     isoMap.place x, y, 0, c
     camera = Crafty.e("Camera").camera c
     console.log "#{c.name} appeared at [#{x},#{y}]"
-    c      
+    portrait = document.createElement("div")
+    "footer".insert("<div class='portrait' style=\"background:url(#{char.portrait}) center center; margin: 5px auto\"></div>")
+    c
   
   generateUser = (user) ->
     console.log "Beginning to generate Characters"
@@ -155,7 +162,6 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
     if k is "character"
       "div#profilesummary".insert("<li class='pixel'>
         #{p.name}
-        <div class='portrait' style=\"background:url(#{p.portrait}) center center;margin: 5px auto\"></div>
       </li>")
       items(p)
     if k is "place" 
@@ -234,7 +240,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
       i[0].onMouseout (event) ->
         "#tail".hide()
     "div#profileinfo".attr "class", "items"
-
+  
   dnd.Draggable.Options.dragstart = (event) ->
     "#tail".hide()
     
@@ -265,19 +271,10 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
         console.log "login confirmed"
         "menu".hide "fade"
         root.User = @responseJSON["user"]
-        usermenu User
         generateUser User
         reveal User
         for char in @responseJSON["char"]
           reveal generateCharacters char)
-          
-  usermenu = (user)->
-    "header".show "fade"
-    "menu".clear()
-    #a methods to generate stuff to isolate what happens underneath.
-    new ui.Button(user["email"]||"Cosmic Dream", id: "usermenu", class: "lui-button-dropdown lui-icon-user").insertTo "header"
-    "header".style('text-align': 'left')
-    console.log "Done User Menu"
   
   updateMap = (long, lat) ->
     unless updateinprogress

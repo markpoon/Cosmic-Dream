@@ -675,6 +675,17 @@ div.droppable-deny {
   box-shadow: -1px 1px 2px rgba(0,0,0,.2);
 }
 
+footer{
+  overflow: hidden;
+  display: inline;
+  position: absolute;
+  bottom: 0;
+  padding: 5px;
+  background-color: rgba(255, 255, 255, 0);
+  text-align: left;
+  z-index: 90000;
+}
+
 /*
  * Media queries for responsive design github.com/h5bp/mobile-boilerplate/wiki/The-Style
  */

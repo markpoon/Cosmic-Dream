@@ -692,34 +692,41 @@ class Place
       else
         puts "found geo locations in sector..."
         value.each do |v|
-          v = Place.transform(key, v)  
-          l = Location.find_by(coordinates: [v["lon"], v["lat"]])
-          c = (v["id"] or ((v["name"]or"")+v["lon"].to_s+","+v["lat"].to_s))
-          unless l.nil? or Place.where(chiral: c).exists?
-            cn = v["name"]
-            l.places.create(chiral: c, chiralname: cn)
+          v = Place.transform(key, v)
+          unless v.nil?
+            l = Location.find_by(coordinates: [v["lon"], v["lat"]])
+            c = (v["id"] or ((v["name"]or"")+v["lon"].to_s+","+v["lat"].to_s))
+            unless l.nil? or Place.where(chiral: c).exists?
+              cn = v["name"]
+              l.places.create(chiral: c, chiralname: cn)
+            end
           end
         end
       end
     end
   end
   def Place.transform(k, v)
-    puts "transforming geolocation into place @ #{v["lon"]}, #{v["lat"]}"
-    v["lat"] = v["lat"].to_f.round 3
-    v["lon"] = v["lon"].to_f.round 3
-    if v["tag"].class == Array
-      v["tag"].each do |t|
-        if t["k"] != ("source"||"created_by")
-          v[t["k"]] = t["v"]
+    p v
+    if v.kind_of? Hash
+      puts "transforming geolocation into place @ #{v["lon"]}, #{v["lat"]}"
+      v["lat"] = v["lat"].to_f.round 3
+      v["lon"] = v["lon"].to_f.round 3
+      if v["tag"].class == Array
+        v["tag"].each do |t|
+          if t["k"] != ("source"||"created_by")
+            v[t["k"]] = t["v"]
+          end
+        end
+      elsif v["tag"].class == Hash
+        if v["tag"]["k"] != ("source"||"created_by")
+          v[v["tag"]["k"]] = v["tag"]["v"]
         end
       end
-    elsif v["tag"].class == Hash
-      if v["tag"]["k"] != ("source"||"created_by")
-        v[v["tag"]["k"]] = v["tag"]["v"]
-      end
+      v.delete("tag")
+      v
+    else
+      nil
     end
-    v.delete("tag")      
-    v
   end
   def self.randomname()
     prefix = ["Aber","Ast","Auch","Ach","Bal","Brad","Car","Caer","Din","Dinas","Gill","Kin","King","Kirk","Lan","Lhan","Llan","Lang","Lin","Pit","Pol","Pont","Stan","Tre","Win","Whel"].sample
@@ -790,7 +797,7 @@ end
 
 get '/location/' do
   coordinates = params[:coordinates].map{|i|(i.to_f*100).ceil/100.0}
-  puts "selecting tiles around sector #{coordinates}"
+  puts "request recieved to selecting tiles around sector #{coordinates}"
   resp = {}
   locations = []
   places = []
@@ -800,11 +807,14 @@ get '/location/' do
   # check if there is a tile at the keystone location.
   selected = selectsector(coordinates)
   if params[:negativecoordinates]
+    puts "negative coordinates present, selecting out #{params[:negativecoordinates]}"
     negative = params[:negativecoordinates].map{|i|i.split(",").map{|j|(j.to_f).round(2)}}
     knockout = negative.map{|i|selectsector(i)}.flatten(1).uniq
     selected = selected - knockout
   end
+  puts "selected area #{selected}"
   selected.each do |c|
+    puts "dealing with area #{c}"
     l = Location.where(coordinates: c)
     unless l.exists?
       puts "could not find keystone tiles, generating sectors..."
@@ -1001,7 +1011,7 @@ get "/js/components.js" do
 end
 
 get "/?" do
-  haml :index
+  haml :index  
 end
 
 not_found{haml :'404'}
@@ -1021,14 +1031,9 @@ __END__
     %link{href: "/style.css", rel: "stylesheet"}
     %script{src: "/js/modernizr.js"}
   %body
-    %div#tail.pixel
-    %header
-      %user
-      %hud  
-    %menu.south
-  %div#container
-  
-    = yield
+    %menu
+    %div#container
+      = yield
   %footer
   %script{src: "/js/lovely/core-1.1.0.js", type: "text/javascript"}
   %script{src: "/js/crafty-min.js", type: "text/javascript"}
