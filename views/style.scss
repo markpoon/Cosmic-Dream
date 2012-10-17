@@ -627,14 +627,27 @@ input {
   margin: 3px 1px -2px;
 }
 
+.portraitslot{
+  float: left;
+  width: 110px;
+  height: 110px;
+}
+
+.portraitbar{
+  position: absolute;
+}
+
 .portrait {
-  width: 96px;
-  height: 96px;
-  border-radius: 50x;
+  width: 84px;
+  height: 84px;
+  border-radius: 50px;
   -webkit-border-radius: 50px;
   box-shadow: inset 0 0 40px rgba(66, 65, 65, 0.76), inset 0 0px 40px rgba(0, 0, 0, 0.2), inset 0 0 3px 1px rgba(0, 0, 0, 0.3), 0 0 3px 1px rgba(0, 0, 0, 0.2);
-  border: 4px solid rgba(255, 255, 255, 0.70);
+  border: 7px solid rgba(255, 255, 255, 0.70);
   cursor: pointer;
+  position: absolute;
+  margin: 9px;
+  z-index: 1;
 }
 
 .lui-button {
@@ -685,7 +698,6 @@ footer{
   text-align: left;
   z-index: 90000;
 }
-
 /*
  * Media queries for responsive design github.com/h5bp/mobile-boilerplate/wiki/The-Style
  */

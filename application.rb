@@ -204,7 +204,7 @@ class Character
   end
   field :wound, type: Integer, default: 0
   def woundmax                                             # recovers at rate of 1/100 hrs, 5% chance that a wound point that recovers turns into a injury.
-    (self.stamina * 3 + self.resolve - self.injury * 1.618).round
+    ((self.stamina * 3 + self.resolve) - self.injury * 1.618).round
   end
   field :injury, type: Integer, default: 0                 # points are gained when healing wounds
 

@@ -118,8 +118,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
     isoMap.place x, y, 0, c
     camera = Crafty.e("Camera").camera c
     console.log "#{c.name} appeared at [#{x},#{y}]"
-    portrait = document.createElement("div")
-    "footer".insert("<div class='portrait' style=\"background:url(#{char.portrait}) center center; margin: 5px auto\"></div>")
+    makeportrait char, c
     c
   
   generateUser = (user) ->
@@ -141,6 +140,45 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
     root.User = _.extend User, user
     isoMap.place x, y, 0, user
     console.log "User appeared at [#{x},#{y}]"
+  
+  makeportrait = (char, c) ->
+    portraitslot = document.createElement("div")
+    portraitslot.className = "portraitslot"
+    portraitslot.id = "#{char.name}_portraitslot"
+    portraitslot.innerHTML = "<div class='portrait' id=\"#{char.name}portrait\" style=\"background:url(#{char.portrait}) center center;\"></div>"
+    scratch = document.createElement("canvas")
+    scratch.className = "portraitbar"
+    scratch.id = "#{char.name}_scratch"
+    scratch.width = 110
+    scratch.height = 110
+    makebar scratch, char.scratch, char.scratchmax, true, "#8CFF9D"
+    portraitslot.appendChild scratch
+    mana = document.createElement("canvas")
+    mana.className = "portraitbar"
+    mana.id = "#{char.name}_mana"
+    mana.width = 110
+    mana.height = 110
+    makebar mana, char.mana, char.manamax, false, "#8CDDFF"
+    portraitslot.appendChild mana
+    "footer".insert portraitslot
+    
+  makebar = (obj, v, max, direction, color) ->
+    v = (max-v) / max
+    if direction is true
+      v = v + 0.51
+    else
+      if v >= 0.5
+        v = 2 - (v - 0.48)
+      else
+        v = 0.5 - v
+    v = v * Math.PI
+    context = obj.getContext "2d"
+    context.beginPath()
+    context.arc(obj.width/2, obj.height/2, 49, v, 0.5 * Math.PI, direction)
+    context.lineWidth = 7
+    context.strokeStyle = color
+    context.stroke()
+    @
     
   c2t = (coordinates) ->
     x = parseFloat((coordinates[0] - Center[0]).toFixed 3) * 1000 + Delta
