@@ -99,16 +99,16 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
   generateCharacters = (char) ->
     console.log "Beginning to generate Characters"
     [x, y] = c2t char.coordinates
-    c = Crafty.e("2D, HTML, DOM, Mouse, Coordinates, Camera, Character, Solid, Slide," + char["gender"])
+    c = Crafty.e("2D, HTML, DOM, Coordinates, Camera, Character, Solid, Slide," + char["gender"])
       .attr
         long: char.coordinates[0]
         lat: char.coordinates[1]
         mapx: x
         mapy: y
         z: 3 + (x + y) * 5
-      .bind("DoubleClick", ->
-        console.log "double clicked character"
-        profile(@, "character") )
+      # .bind("DoubleClick", ->
+      #   console.log "double clicked character"
+      #   profile(@, "character") )
       # .css(
       #   "font": "7pt Monaco"
       #   "text-align": "center"
@@ -119,6 +119,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
     camera = Crafty.e("Camera").camera c
     console.log "#{c.name} appeared at [#{x},#{y}]"
     makeportrait char, c
+    c.trigger "setControls"
     c
   
   generateUser = (user) ->
@@ -165,12 +166,12 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
   makebar = (obj, v, max, direction, color) ->
     v = (max-v) / max
     if direction is true
-      v = v + 0.51
+      v = v + 0.50
     else
       if v >= 0.5
         v = 2 - (v - 0.48)
       else
-        v = 0.5 - v
+        v = 0.50 - v
     v = v * Math.PI
     context = obj.getContext "2d"
     context.beginPath()
@@ -204,7 +205,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
       items(p)
     if k is "place" 
       "div#profilesummary".insert("<li class='pixel'>
-        #{p.name}, #{p.kind}
+        #{p.name}, #{p.kind}, #{p.cname}
         <div class='portrait' style=\"background:url(#{p.portrait}) center center;margin: 5px auto\"></div>
       </li>")
       store(p)
@@ -436,6 +437,8 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
          Crafty.addEvent this, Crafty.stage.elem, "mouseup", ->
            Crafty.removeEvent this, Crafty.stage.elem, "mousemove", scroll
            
+      Crafty.addEvent
+           
       Crafty.c "Camera",
         init: ->
         camera: (obj) ->
@@ -449,7 +452,23 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
           
       Crafty.c "Terrain",
         _sight: 0
+        _controllingchar: undefined
         init: ->
+          @bind "TerrainControls", (c) -> 
+            @y -= 10
+            @_controllingchar = c
+            @bind "Click", (e) ->
+              o = @_controllingchar
+              r = [-(o.mapx - @mapx), -(o.mapy - @mapy)]
+              @_controllingchar.trigger "Slide", r
+              @removeTerrainControls()
+          @bind "removeTerrainControls", (c) ->
+            for tile in c._charcontrols
+              tile.unbind "Click"
+              tile.y +=10
+              c._charcontrols = []
+              tile._controllingchar = undefined
+            
         checkvision: () ->
           that = @
           @bind "checkforhide", ->
@@ -458,6 +477,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
             else if that.sight > 0
               that.visible = true
             that.draw()
+        
 
       Crafty.c "Coordinates",
         _coordinates: undefined
@@ -499,6 +519,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
         _materialism: 0
         _stubbornness: 0
         _items: []
+        _charcontrols: []
 
         _keys:
           UP_ARROW: [0, -1]
@@ -518,6 +539,14 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
                 direction = @_keys[e.key]
                 @trigger "Slide", direction
                 Crafty.trigger "Turn"
+          @bind "setControls", ->
+            t = Crafty "Terrain"
+            for num in t.toArray()
+              tile = Crafty(t[num])
+              if ((tile.mapy == @mapy and (tile.mapx == @mapx+1 or tile.mapx == @mapx-1)) or (tile.mapx == @mapx and (tile.mapy == @mapy+1 or tile.mapy == @mapy-1)))
+                tile.trigger "TerrainControls", @
+                @_charcontrols.push tile
+            
       Crafty.c "Slide",
       # Our slide component - listens for slide events
       # and smoothly slides to another tile location
@@ -534,6 +563,8 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
           @bind("Slide", (d) ->
             # Don't continue to slide if we're already moving
             return false  if @_moving
+            for tile in @_charcontrols
+              tile.trigger "removeTerrainControls", @
             @_moving = true
             @_direction = d
             @_sourceXY = [@x, @y]
@@ -563,16 +594,18 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
               @y = @_destXY[1]
               "menu".hide()
               "menu".clear()
+              # check if you are out of the boundary
+              # if so, send location request with the new area.
               checkforupdate([@long, @lat])
               reveal @, @_sourcemapXY              
               if (@_direction[0] == -1 || @_direction[1] == -1) 
                 console.log "switch z at end"
                 @z = 4 + (@mapx + @mapy) * 5
-              # check if you are out of the boundary
-              # if so, send location request with the new area.
+              @trigger "setControls"
             @trigger "Moved",
               x: @x
               y: @y
+
         slideFrames: (frames) ->
           @_stepFrames = frames
           # A function we'll use later to 
@@ -583,6 +616,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
           [@mapx, @mapy] = [@mapx - @_direction[0], @mapy - @_direction[1]]
           [@long, @lat] = t2c [@mapx, @mapy]
           @_moving = false
+          @trigger "setControls"
           @trigger "Moved",
             x: @x
             y: @y

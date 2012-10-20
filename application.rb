@@ -1025,7 +1025,8 @@ __END__
   %head
     %title= @title
     %meta{name: "description", content: @description}
-    %meta{name: "viewport", content: "width=device-width, minimum-scale=1.0, maximum-scale=2.0"}
+    %meta{name: "keywords", content: @keywords}
+    %meta{name: "viewport", content: "width=device-width,user-scalable=0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0"}
     %link{href: "/css/normalize.css", rel: "stylesheet"}
     %link{href: "/css/popup.css", rel: "stylesheet"}
     %link{href: "/style.css", rel: "stylesheet"}
