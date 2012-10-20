@@ -455,17 +455,17 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
         _controllingchar: undefined
         init: ->
           @bind "TerrainControls", (c) -> 
-            @y -= 10
+            @.alpha -= 0.2
             @_controllingchar = c
             @bind "Click", (e) ->
               o = @_controllingchar
               r = [-(o.mapx - @mapx), -(o.mapy - @mapy)]
               @_controllingchar.trigger "Slide", r
-              @removeTerrainControls()
+              @trigger removeTerrainControls()
           @bind "removeTerrainControls", (c) ->
             for tile in c._charcontrols
               tile.unbind "Click"
-              tile.y +=10
+              tile.alpha += 0.2
               c._charcontrols = []
               tile._controllingchar = undefined
             
