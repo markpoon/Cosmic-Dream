@@ -60,7 +60,6 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
           "text-align": "center"
           "line-height": "140px"
         .textColor("#000000", 0.16)
-      t.text "[#{x},#{y}]"
       for interactive in ["water", "waterfish", "forestmushroom", "forestfruit"]
         if tile.terrain is interactive
           t.addComponent "Collision"
@@ -206,7 +205,8 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
       items(p)
     if k is "place" 
       "div#profilesummary".insert("<li class='pixel'>
-        #{p.name}, #{p.kind} <br> #{p.chiralname}
+        #{p.name}, #{p.kind}, #{p.cname}
+        <div class='portrait' style=\"background:url(#{p.portrait}) center center;margin: 5px auto\"></div>
       </li>")
       store(p)
     "menu".show "fade"
@@ -223,9 +223,11 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
     "div#profileinfo".html("
       <li>Occupants Overview</>
       <li>
+        <div class='portrait' style=\"background:url(#{p.sprite()._image}) center center;margin: 5px auto\"></div>
         <button id='talk' class='lui-button'>Talk</button><
       </li>
       <li>
+        <div class='portrait' style=\"background:url(#{p.sprite()._image}) center center;margin: 5px auto\"></div>
         <button id='talk' class='lui-button'>Talk</button>
       </li>
       ", "animate").attr "class", "occupants" 
@@ -241,7 +243,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
     "div#profileinfo".clear()
     "div#profileinfo".insert "<li class='pixel'>#{p.xp}xp, #{p.spirit} spirit</li>"
     for stat in ["strength", "stamina", "dexterity", "intellegence", "intuition", "persuasion", "resolve"]
-      "div#profileinfo".insert "<li><button id=\"#{p[stat]}\" class='lui-button '>#{stat} : #{p[stat]}</button></li>"
+      "div#profileinfo".insert "<li class='pixel'><button id=\"#{p[stat]}\" class='lui-button '>#{stat} : #{p[stat]}</button></li>"
       "div#profileinfo".attr "class", "stats"
 
   items = (p) ->
@@ -452,19 +454,20 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
         _sight: 0
         _controllingchar: undefined
         init: ->
-          @bind "TerrainControls", (c) ->
+          @bind "TerrainControls", (c) -> 
             @.alpha -= 0.2
             @_controllingchar = c
             @bind "Click", (e) ->
               o = @_controllingchar
               r = [-(o.mapx - @mapx), -(o.mapy - @mapy)]
               @_controllingchar.trigger "Slide", r
+              @trigger removeTerrainControls()
           @bind "removeTerrainControls", (c) ->
             for tile in c._charcontrols
               tile.unbind "Click"
               tile.alpha += 0.2
+              c._charcontrols = []
               tile._controllingchar = undefined
-            c._charcontrols = []
             
         checkvision: () ->
           that = @
@@ -474,6 +477,7 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
             else if that.sight > 0
               that.visible = true
             that.draw()
+        
 
       Crafty.c "Coordinates",
         _coordinates: undefined
@@ -536,13 +540,12 @@ Lovely ["dom-1.2.0", "fx-1.0.3", "ui-2.0.1", "ajax-1.1.2", "dnd-1.0.1", "sugar-1
                 @trigger "Slide", direction
                 Crafty.trigger "Turn"
           @bind "setControls", ->
-            [x, y] = [@mapx, @mapy]
-            for num in [[x, y+1],[x, y-1],[x+1, y],[x-1, y]]
-              tiles = $(".mapx"+num[0]+".mapy"+num[1])
-              for tile in tiles
-                t = Crafty(parseInt((tile._.id).slice(3))) 
-                t.trigger "TerrainControls", @
-                @_charcontrols.push t
+            t = Crafty "Terrain"
+            for num in t.toArray()
+              tile = Crafty(t[num])
+              if ((tile.mapy == @mapy and (tile.mapx == @mapx+1 or tile.mapx == @mapx-1)) or (tile.mapx == @mapx and (tile.mapy == @mapy+1 or tile.mapy == @mapy-1)))
+                tile.trigger "TerrainControls", @
+                @_charcontrols.push tile
             
       Crafty.c "Slide",
       # Our slide component - listens for slide events
