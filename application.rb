@@ -5,7 +5,6 @@ require "sass"
 require "redcarpet"
 require "pry"
 require "json"
-require "active_support/core_ext/hash/conversions"
 require "mongoid"
 require "coffee-script"
 
@@ -826,6 +825,7 @@ get '/location/' do
     limits = [c, c.map{|i|(i - 0.009).round(2)}]
     puts "Found! preparing response within box - #{limits}"
     l = Location.where(:coordinates.within_box => limits).only(:coordinates, :resource, :terrain)
+    binding.pry
     l.each do |i| 
       if i.places?
         i.places.each do |p|
